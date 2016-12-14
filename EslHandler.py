@@ -26,6 +26,7 @@ class EslHandler(SocketServer.BaseRequestHandler, FsReqBranches):
         data = "Content-Type: auth/request\n\n"
         self.request.send(data)
         data = self.request.recv(1024)
+        self.logger.debug('data = "%s", get auth from Fusion)', data)
         data = "Content-Type: command/reply\nReply-Text: +OK accepted\n\n"
         self.request.send(data)
 
@@ -61,14 +62,31 @@ class EslHandler(SocketServer.BaseRequestHandler, FsReqBranches):
                 vars.p.get('ssh').cmd_to_cluster(ssh_cmd)
                 body_xml = "OK+\n\n"
                 data_set = 1 # data = result1.serialize() for default
+            elif fs_req[0:7] == "new fs ":
+                self.logger.debug('new fs') ## restart in app/sip_status/sip_status.php
+                newfs = fs_req[7:fs_req.find("\n")]
+                self.logger.debug('newfs = "%s"', newfs)
+                is_here = 0;
+                for x in vars.fs:
+                    if x['host'] == newfs:
+                        is_here = 1;
+                if is_here:
+                    self.logger.debug('this fs is already in list - do update dispatcher')
+                    sql_req = "UPDATE dispatcher SET state=0 WHERE host='" + newfs + "';"
+                else:
+                    self.logger.debug('new fs - add new write to dispatcher')
+                    sql_req = "INSERT INTO dispatcher VALUES ('', 1, 'sip:" + newfs + ":5060', '', 0, 50, 0, 'C0', 'ff11-201');"
+                
+                self.logger.debug('new fs -> handle end')
+                return
             else:
                 if vars.p.get('esl').cmd_to_cluster(fs_req): ## Send fs_req to FS cluster
                     data_set = 0 # data = result1.serialize() by default
                     data = vars.rfs[0].get('result').serialize()
                 else: # fs_sum = 0
-                    body_xml = "\n\n"
-                    data_set = 1 # data = result1.serialize() for default
-                    fs_req = "skip branches"
+                    body_xml = "\n\n" #zero answer if no working FS-nodes
+                    data_set = 1
+                    #fs_req = "skip branches"
                     
 
             if fs_req[0:24] == "api conference xml_list\n":
@@ -97,7 +115,7 @@ class EslHandler(SocketServer.BaseRequestHandler, FsReqBranches):
                 data_set = 1                        ## FreeSWITCH (Version 1.8.0 git b8c65fb 2016-09-28 22:10:47Z 64bit) is ready        
                 
             elif fs_req[0:26] == "api show channels as json\n":
-                body_xml = self.show_channels_as_json() ## app/sip_status/sip_status.php
+                body_xml = self.show_channels_as_json() ## calls_active/calls_active.php
                 data_set = 1
                 
             elif fs_req[0:14] == "api fifo list\n" or fs_req[0:21] == "api fifo list_verbose":
@@ -136,3 +154,5 @@ class EslHandler(SocketServer.BaseRequestHandler, FsReqBranches):
     def finish(self):
         #self.logger.debug('finish')
         return SocketServer.BaseRequestHandler.finish(self)
+
+### EOF

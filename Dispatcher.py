@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import thread
 import MySQLdb
 from ESL import *
 import logging
@@ -93,11 +94,12 @@ class Dispatcher():
     def list_connect(self):
         self.logger.debug('list_connect')
         for x in self.list:
-            self.connect(x)
+            self.logger.debug('start_new_thread for connect to %s', x.get('host'))
+            thread.start_new_thread(self.connect, (x,)) # 2nd arg must be a tuple
         return self.list
 
     def connect(self, x):
         self.logger.debug('connect')
         return
 
-    
+## EOF

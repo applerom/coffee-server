@@ -15,7 +15,7 @@ class EslDispatcher(Dispatcher):
                 'user': "",
                 'password': "ClueCon",
                 'description': "",
-                'state': 1 }
+                'state': 0 }
 
     def __init__(self):
         self.logger = logging.getLogger('EslDispatcher')
@@ -27,6 +27,7 @@ class EslDispatcher(Dispatcher):
         fs_cur = ESLconnection(x.get('host'), x.get('port'), x.get('password'))
         if fs_cur.connected():
             x['fp'] = fs_cur
+            x['state'] = 1
             self.logger.debug('connected to "%s", fp="%s"', x.get('description'), fs_cur)
         else:
             self.logger.debug('cannot connect to "%s"!', x.get('host'))
@@ -69,3 +70,5 @@ class EslDispatcher(Dispatcher):
                     self.logger.debug('error in transition with "%s"', x.get('host'))
                     x['state'] = 0
         return len(vars.rfs)
+
+## EOF
