@@ -36,6 +36,35 @@ class SshDispatcher(Dispatcher):
             return 0
         return
 
+    def cmd_to_host(self, ssh_cmd, host, port=default.get('port')): # 'sudo service freeswitch restart'
+        self.logger.debug('cmd_to_opensips')
+        self.logger.debug('connect to "%s:%s", user = "%s", password "%s", path to cert = "%s"',
+                            host,
+                            port,
+                            self.default.get('user'),
+                            self.default.get('password'),
+                            self.cert
+                            )
+        try:
+            sshcon = paramiko.SSHClient()  # will create the object
+            sshcon.set_missing_host_key_policy(paramiko.AutoAddPolicy()) # no known_hosts error
+
+            sshcon.connect( hostname =      host,
+                            port =          port,
+                            username =      self.default.get('user'),
+                            key_filename =  self.cert
+                            ) # no passwd needed
+            channel = sshcon.get_transport().open_session()
+            channel.get_pty()
+            channel.settimeout(2)
+            channel.exec_command(ssh_cmd)
+            #res = channel.recv_exit_status()
+            self.logger.debug('ssh host %s on cmd "%s"', host, ssh_cmd)
+        except paramiko.SSHException:
+            self.logger.debug('SSH cmd error for "%s"', host)  
+            return 0
+        return 1
+
     def cmd_to_cluster(self, ssh_cmd): # 'sudo service freeswitch restart'
         self.logger.debug('cmd_to_cluster')
         for x in vars.ssh:
@@ -68,3 +97,4 @@ class SshDispatcher(Dispatcher):
                 return 0
         return 1
 
+### EOF

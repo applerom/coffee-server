@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import MySQLdb
+import boto3
 from ESL import *
 from Dispatcher import *
 import time
@@ -45,9 +46,39 @@ class EslDispatcher(Dispatcher):
                         if fs_cur.connected():
                             x['fp'] = fs_cur
                             x['state'] = 1
+                            # check if new fs present in opensips dispatcher
+                            present = 0
+                            for xx in self.req_sql("SELECT * FROM `dispatcher` LIMIT 50"): ## x[2] = host, x[8] = description
+                                self.logger.debug('row = "%s"', xx)
+                                self.logger.debug('xx[2].split(":")[1] = "%s" host = "%s"', xx[2].split(":")[1], x.get('host'))
+                                if xx[2].split(":")[1] == x.get('host'):
+                                    present = 1
+                            if not present:
+                                # new fs
+                                self.logger.debug('add new fs to opensips "%s", fp="%s"', x.get('description'), fs_cur)
+                                ## change to use opensipsctl
+                                ## sql_cmd = "INSERT INTO dispatcher VALUES (0, 1, 'sip:" + newfs + ":5060', '', 2, 50, 0, 'C0', '" + newfs_desc + "');"
+                                ## self.request.send(sql_cmd)
+                                ssh_cmd = "sudo opensipsctl dispatcher addgw 1 sip:" + x.get('host') + ":5060 '' 0 50 'auto' '" + x.get('description') + "'"
+                                vars.p.get('ssh').cmd_to_host(ssh_cmd, 'iopensips.secrom.com', 64016)
+                                ssh_cmd = "sudo opensipsctl dispatcher reload"
+                                vars.p.get('ssh').cmd_to_host(ssh_cmd, 'iopensips.secrom.com', 64016)
+                            
                             self.logger.debug('reconnected to "%s", fp="%s"', x.get('description'), fs_cur)
                         else:
                             self.logger.debug('still cannot connect to "%s"!', x.get('host'))
+                            ec2 = boto3.client('ec2', region_name='us-east-1')
+                            filters = [{ 'Name': 'private-ip-address', 'Values': [x.get('host')] }]
+                            resp = ec2.describe_instances(Filters=filters)
+                            if len(resp.get('Reservations')):
+                                self.logger.debug('fs did not answer but instance exists, its state is "%s"', resp.get('Reservations')[0].get('Instances')[0].get('State').get('Name'))
+                            else:
+                                self.logger.debug('instance with IP %s does not exist! Remove it from Opensips DB.', x.get('host'))
+                                sql_cmd = "DELETE FROM dispatcher WHERE destination='sip:" + x.get('host') + ":5060';"
+                                self.req_sql(sql_cmd)
+                                ssh_cmd = "sudo opensipsctl dispatcher reload"
+                                vars.p.get('ssh').cmd_to_host(ssh_cmd, 'iopensips.secrom.com', 64016)
+                                vars.fs.remove(x)
                             time.sleep(15)
                     except:
                         #self.logger.debug('error in transition with esl')
@@ -56,6 +87,7 @@ class EslDispatcher(Dispatcher):
         return
 
     def cmd_to_cluster(self, fs_req):
+        self.logger.debug('cmd_to_cluster')
         vars.rfs[:] = []
         for x in vars.fs:
             #self.logger.debug('fp = "%s", send to %s "%s" fs_req "%s"', x.get('fp'), x.get('description'), x.get('host'), fs_req)

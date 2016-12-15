@@ -15,18 +15,20 @@ import logging
 logging.basicConfig(level=vars.LOG_LEVEL, format='%(name)s: %(message)s', )
 
 class EslHandler(SocketServer.BaseRequestHandler, FsReqBranches):
+    client_ip = ''
     def __init__(self, request, client_address, server):
         self.logger = logging.getLogger('EslHandler')
+        self.client_ip = client_address[0]
         #self.logger.debug('__init__')
         SocketServer.BaseRequestHandler.__init__(self, request, client_address, server)
         return
     def setup(self):
-        self.logger.debug('setup (self.client_address = "%s", get auth from Fusion)', self.client_address)
+        self.logger.debug('setup (client_address = "%s"), get auth from client', self.client_address)
         
         data = "Content-Type: auth/request\n\n"
         self.request.send(data)
         data = self.request.recv(1024)
-        self.logger.debug('data = "%s", get auth from Fusion)', data)
+        self.logger.debug('recieved data = "%s"', data)
         data = "Content-Type: command/reply\nReply-Text: +OK accepted\n\n"
         self.request.send(data)
 
@@ -62,21 +64,27 @@ class EslHandler(SocketServer.BaseRequestHandler, FsReqBranches):
                 vars.p.get('ssh').cmd_to_cluster(ssh_cmd)
                 body_xml = "OK+\n\n"
                 data_set = 1 # data = result1.serialize() for default
-            elif fs_req[0:7] == "new fs ":
-                self.logger.debug('new fs') ## restart in app/sip_status/sip_status.php
-                newfs = fs_req[7:fs_req.find("\n")]
+            elif fs_req[0:6] == "new fs":
+                self.logger.debug('new fs "%s" ', self.client_ip) ## restart in app/sip_status/sip_status.php
+                #newfs = fs_req[7:fs_req.find("\n")]
+                #newfs = fs_req[7:]
+                newfs = self.client_ip
                 self.logger.debug('newfs = "%s"', newfs)
                 is_here = 0;
                 for x in vars.fs:
                     if x['host'] == newfs:
                         is_here = 1;
+                ## (`id`, `setid`, `destination`, `socket`, `state`, `weight`, `priority`, `attrs`, `description`)
                 if is_here:
                     self.logger.debug('this fs is already in list - do update dispatcher')
-                    sql_req = "UPDATE dispatcher SET state=0 WHERE host='" + newfs + "';"
+                    sql_cmd = "UPDATE dispatcher SET state=0 WHERE destination='sip:" + newfs + ":5060';"
+                    res = vars.p.get('esl').req_sql(sql_cmd)               
+                    self.logger.debug('res = "%s"', res)
                 else:
                     self.logger.debug('new fs - add new write to dispatcher')
-                    sql_req = "INSERT INTO dispatcher VALUES ('', 1, 'sip:" + newfs + ":5060', '', 0, 50, 0, 'C0', 'ff11-201');"
-                
+                    newfs_desc = "ff" + newfs.split(".")[2] + "-" + newfs.split(".")[3] # like ff11-102
+                    vars.fs.append(vars.p.get('esl').new_write(newfs, newfs_desc))
+                self.request.send("bash responce " + str(is_here) + "\n\n") # send responce to bash-script
                 self.logger.debug('new fs -> handle end')
                 return
             else:
