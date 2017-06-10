@@ -59,9 +59,15 @@ class EslHandler(SocketServer.BaseRequestHandler, FsReqBranches):
         while data:
             fs_req = data # store request from Fusion to FS in fs_req
             if fs_req[0:26] == "restart freeswitch cluster":
-                self.logger.debug('restart profile branch') ## restart in app/sip_status/sip_status.php
+                self.logger.debug('restart freeswitch cluster')
                 ssh_cmd='sudo service freeswitch restart'
                 vars.p.get('ssh').cmd_to_cluster(ssh_cmd)
+                body_xml = "OK+\n\n"
+                data_set = 1 # data = result1.serialize() for default
+            elif fs_req[0:16] == "restart opensips":
+                self.logger.debug('restart opensips')
+                ssh_cmd='sudo /usr/local/sbin/opensipsctl restart'
+                vars.p.get('ssh').cmd_to_host(ssh_cmd, 'iopensips.secrom.com', 64016)
                 body_xml = "OK+\n\n"
                 data_set = 1 # data = result1.serialize() for default
             elif fs_req[0:6] == "new fs":
