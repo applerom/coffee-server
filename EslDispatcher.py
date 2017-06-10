@@ -60,9 +60,9 @@ class EslDispatcher(Dispatcher):
                                 ## sql_cmd = "INSERT INTO dispatcher VALUES (0, 1, 'sip:" + newfs + ":5061', '', 2, 50, 0, 'C0', '" + newfs_desc + "');"
                                 ## self.request.send(sql_cmd)
                                 ssh_cmd = "sudo opensipsctl dispatcher addgw 1 sip:" + x.get('host') + ":5061 '' 0 50 'auto' '" + x.get('description') + "'"
-                                vars.p.get('ssh').cmd_to_host(ssh_cmd, '10.100.1.85', 64016, 'ec2-user')
+                                vars.p.get('ssh').cmd_to_host(ssh_cmd, '10.100.1.85', 22, 'ec2-user')
                                 ssh_cmd = "sudo opensipsctl dispatcher reload"
-                                vars.p.get('ssh').cmd_to_host(ssh_cmd, '10.100.1.85', 64016, 'ec2-user')
+                                vars.p.get('ssh').cmd_to_host(ssh_cmd, '10.100.1.85', 22, 'ec2-user')
                             
                             self.logger.debug('reconnected to "%s", fp="%s"', x.get('description'), fs_cur)
                         else:
@@ -77,7 +77,7 @@ class EslDispatcher(Dispatcher):
                                 sql_cmd = "DELETE FROM dispatcher WHERE destination='sip:" + x.get('host') + ":5061';"
                                 self.req_sql(sql_cmd)
                                 ssh_cmd = "sudo opensipsctl dispatcher reload"
-                                vars.p.get('ssh').cmd_to_host(ssh_cmd, '10.100.1.85', 64016, 'ec2-user')
+                                vars.p.get('ssh').cmd_to_host(ssh_cmd, '10.100.1.85', 22, 'ec2-user')
                                 vars.fs.remove(x)
                             time.sleep(15)
                     except:

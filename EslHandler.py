@@ -67,7 +67,7 @@ class EslHandler(SocketServer.BaseRequestHandler, FsReqBranches):
             elif fs_req[0:16] == "restart opensips":
                 self.logger.debug('restart opensips')
                 ssh_cmd='sudo /usr/local/sbin/opensipsctl restart'
-                vars.p.get('ssh').cmd_to_host(ssh_cmd, '10.100.1.85', 64016, 'ec2-user')
+                vars.p.get('ssh').cmd_to_host(ssh_cmd, '10.100.1.85', 22, 'ec2-user')
                 body_xml = "OK+\n\n"
                 data_set = 1 # data = result1.serialize() for default
             elif fs_req[0:6] == "new fs":
