@@ -15,7 +15,7 @@ vars.p['esl'] = ff.getself()
 #t.init_fs_list(fs_host_list)
 
 ## for init_fs_from_mysql
-opensips = {    'host': "10.100.20.148",
+opensips = {    'host': "opensipsdb.cfevji3xkn63.us-east-1.rds.amazonaws.com",
                 'port': 3306,
                 'user': "opensips",
                 'passwd': "opensipsrw",
@@ -43,5 +43,3 @@ try:
 except KeyboardInterrupt:
         pass
 server.server_close()
-
-## EOF

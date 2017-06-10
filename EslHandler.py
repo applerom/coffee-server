@@ -77,7 +77,7 @@ class EslHandler(SocketServer.BaseRequestHandler, FsReqBranches):
                 ## (`id`, `setid`, `destination`, `socket`, `state`, `weight`, `priority`, `attrs`, `description`)
                 if is_here:
                     self.logger.debug('this fs is already in list - do update dispatcher')
-                    sql_cmd = "UPDATE dispatcher SET state=0 WHERE destination='sip:" + newfs + ":5060';"
+                    sql_cmd = "UPDATE dispatcher SET state=0 WHERE destination='sip:" + newfs + ":5061';"
                     res = vars.p.get('esl').req_sql(sql_cmd)               
                     self.logger.debug('res = "%s"', res)
                 else:

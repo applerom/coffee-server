@@ -11,7 +11,7 @@ class SshDispatcher(Dispatcher):
     default = { 'fp': 0,
                 'host': "",
                 'port': 22,         ## paramiko: port (int) – the server port to connect to
-                'user': "admin",
+                'user': "centos",
                 'password': "",
                 'description': "",
                 'state': 1 }
@@ -98,3 +98,4 @@ class SshDispatcher(Dispatcher):
         return 1
 
 ### EOF
+

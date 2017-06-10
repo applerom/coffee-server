@@ -57,9 +57,9 @@ class EslDispatcher(Dispatcher):
                                 # new fs
                                 self.logger.debug('add new fs to opensips "%s", fp="%s"', x.get('description'), fs_cur)
                                 ## change to use opensipsctl
-                                ## sql_cmd = "INSERT INTO dispatcher VALUES (0, 1, 'sip:" + newfs + ":5060', '', 2, 50, 0, 'C0', '" + newfs_desc + "');"
+                                ## sql_cmd = "INSERT INTO dispatcher VALUES (0, 1, 'sip:" + newfs + ":5061', '', 2, 50, 0, 'C0', '" + newfs_desc + "');"
                                 ## self.request.send(sql_cmd)
-                                ssh_cmd = "sudo opensipsctl dispatcher addgw 1 sip:" + x.get('host') + ":5060 '' 0 50 'auto' '" + x.get('description') + "'"
+                                ssh_cmd = "sudo opensipsctl dispatcher addgw 1 sip:" + x.get('host') + ":5061 '' 0 50 'auto' '" + x.get('description') + "'"
                                 vars.p.get('ssh').cmd_to_host(ssh_cmd, 'iopensips.secrom.com', 64016)
                                 ssh_cmd = "sudo opensipsctl dispatcher reload"
                                 vars.p.get('ssh').cmd_to_host(ssh_cmd, 'iopensips.secrom.com', 64016)
@@ -74,7 +74,7 @@ class EslDispatcher(Dispatcher):
                                 self.logger.debug('fs did not answer but instance exists, its state is "%s"', resp.get('Reservations')[0].get('Instances')[0].get('State').get('Name'))
                             else:
                                 self.logger.debug('instance with IP %s does not exist! Remove it from Opensips DB.', x.get('host'))
-                                sql_cmd = "DELETE FROM dispatcher WHERE destination='sip:" + x.get('host') + ":5060';"
+                                sql_cmd = "DELETE FROM dispatcher WHERE destination='sip:" + x.get('host') + ":5061';"
                                 self.req_sql(sql_cmd)
                                 ssh_cmd = "sudo opensipsctl dispatcher reload"
                                 vars.p.get('ssh').cmd_to_host(ssh_cmd, 'iopensips.secrom.com', 64016)
@@ -104,3 +104,4 @@ class EslDispatcher(Dispatcher):
         return len(vars.rfs)
 
 ## EOF
+

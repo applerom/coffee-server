@@ -15,7 +15,7 @@ class FsReqBranches():
         self.logger.debug('__init__')
         return
 
-    def show_channels_as_json(self):                # calls_active/calls_active.php
+    def show_channels_as_json(self): # calls_active/calls_active.php
         self.logger.debug('branch "calls_active"')
         if len(vars.rfs) == 0:
             return '{"row_count":0,"rows":[{"hostname":"ff10-110.secrom.com","created":"Freeswitch NOT AVAILABLE !"},{"hostname":"ff11-162.secrom.com","created":"Freeswitch NOT AVAILABLE !"}]}' + "\n\n"
@@ -63,7 +63,7 @@ class FsReqBranches():
 
         return xmlET.tostring(profile, encoding="ISO-8859-1", method="xml") + "\n"
 
-    def fifo_list(self):                            ## sum
+    def fifo_list(self):    ## sum
         self.logger.debug('branch "fifo_list"')
         root = xmlET.Element('fifo_report')
         for x in vars.rfs:
@@ -71,13 +71,13 @@ class FsReqBranches():
                 root.extend(xmlET.fromstring(x['resp']))
         return xmlET.tostring(root) + "\n"              ## CHECK in the real work!
 
-    def fifo_list_(self):                           ## first only
+    def fifo_list_(self):   ## first only
         self.logger.debug('branch "fifo_interactive"')
         for x in vars.rfs:
             if x['resp'][0:13] == "<fifo_report>":
                 return x['resp']                        ## CHECK in the real work!
 
-    def conference_xml_list(self):                  # conferences_active/conference_interactive.php
+    def conference_xml_list(self):
         self.logger.debug('branch "conferences_active"')
         root = xmlET.Element('conferences')
         for x in vars.rfs:
@@ -88,7 +88,7 @@ class FsReqBranches():
                 root.extend(t)
         return xmlET.tostring(root, encoding="ISO-8859-1", method="xml") + "\n"
 
-    def conference__(self):                         # fs_req "api conference '3689fc1f-e367-4f88-80cb-384357a7715b-sp.secrom.com' xml_list
+    def conference__(self):
         self.logger.debug('branch "conferences_active"')
         root = xmlET.Element('conferences')
         for x in vars.rfs:
@@ -99,7 +99,7 @@ class FsReqBranches():
                 root.extend(t)
         return xmlET.tostring(root, encoding="ISO-8859-1", method="xml") + "\n"
 
-    def sofia_xmlstatus(self):                      # sip_status/sip_status.php
+    def sofia_xmlstatus(self): # sip_status/sip_status.php
         self.logger.debug('branch "sip status"')
         root = xmlET.Element('profiles')
         t = xmlET.fromstring("<profile><name /><type /><data /><state /></profile>")
@@ -108,8 +108,11 @@ class FsReqBranches():
             t.find("type").text = x['description']
             t.find("data").text = x['host']
             if x['state']:
-                root.extend(xmlET.fromstring(x['resp']))
-                t.find("state").text = "RUNNING"
+                if x['resp'][0:6] == "<?xml ":
+                    root.extend(xmlET.fromstring(x['resp']))
+                    t.find("state").text = "RUNNING"
+                else:
+                    t.find("state").text = "RESTARTING"
             else:
                 t.find("state").text = "NOT RUNNING"
             root.append(xmlET.fromstring(xmlET.tostring(t))) # copy element without linking(deepcopy)
@@ -141,7 +144,7 @@ class FsReqBranches():
         root.extend([item[-1] for item in sdata]) # insert the last item from each tuple
         return xmlET.tostring(root, encoding="ISO-8859-1", method="xml") + "\n"
 
-    def sofia_xmlstatus_profile_internal(self):     # sip_status/sip_status.php 2 (SOFIA STATUS PROFILE INTERNAL)
+    def sofia_xmlstatus_profile_internal(self): # sip_status/sip_status.php 2 (SOFIA STATUS PROFILE INTERNAL)
         self.logger.debug('branch "SOFIA STATUS PROFILE INTERNAL"')
         root= xmlET.Element('profile')
         t   = xmlET.Element('profile-info')
@@ -164,6 +167,9 @@ class FsReqBranches():
                     for sub in sub_elements:
                         t.find(sub).text += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FS" + str(num) + ": " + root.find('profile-info').findtext(sub, default =" ")
                         #self.logger.debug('sub = "%s" ', t.find(sub).text )
+                else:
+                    t.find("name").text = x['resp']
+                    root.append(t)
             #self.logger.debug('root = "%s" ', xmlET.tostring(root) )
             for sub in sub_elements:
                 root.find('profile-info').find(sub).text = t.findtext(sub)
@@ -174,7 +180,7 @@ class FsReqBranches():
 
         return xmlET.tostring(root, encoding="ISO-8859-1", method="xml") + "\n"
 
-    def status(self):                               # sip_status/sip_status.php 3
+    def status(self): # sip_status/sip_status.php 3
         self.logger.debug('branch "sip uptime"')
         body_xml = ""
         for num,x in enumerate(vars.rfs):
@@ -182,5 +188,5 @@ class FsReqBranches():
             #self.logger.debug('resp = "%s"', x.get('resp'))
         return body_xml
 
-
+        
 ### EOF
