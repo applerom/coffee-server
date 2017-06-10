@@ -36,12 +36,12 @@ class SshDispatcher(Dispatcher):
             return 0
         return
 
-    def cmd_to_host(self, ssh_cmd, host, port=default.get('port')): # 'sudo service freeswitch restart'
+    def cmd_to_host(self, ssh_cmd, host, port=default.get('port'), user=default.get('user')): # 'sudo service freeswitch restart'
         self.logger.debug('cmd_to_opensips')
         self.logger.debug('connect to "%s:%s", user = "%s", password "%s", path to cert = "%s"',
                             host,
                             port,
-                            self.default.get('user'),
+                            user,
                             self.default.get('password'),
                             self.cert
                             )
@@ -51,7 +51,7 @@ class SshDispatcher(Dispatcher):
 
             sshcon.connect( hostname =      host,
                             port =          port,
-                            username =      self.default.get('user'),
+                            username =      user,
                             key_filename =  self.cert
                             ) # no passwd needed
             channel = sshcon.get_transport().open_session()
